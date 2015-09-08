@@ -7,14 +7,17 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <string>
+#include <sstream>
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <iostream>
+
+using namespace std;
 
 #include <arpa/inet.h>
-
-#define PORT "3490" // the port client will be connecting to 
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
@@ -36,16 +39,45 @@ int main(int argc, char *argv[])
 	int rv;
 	char s[INET6_ADDRSTRLEN];
 
+	// URL Parser
+	std::size_t colPos;
+	std::size_t colonPos;
+	std::size_t filePos;
+	std::string newUrl;
+	std::string url;
+	std::string hostname;
+	std::string filename;
+	std::string default_port = "3490";
+	std::string port;
+		
 	if (argc != 2) {
 	    fprintf(stderr,"usage: client hostname\n");
 	    exit(1);
 	}
 
+	// Get the url
+	url = argv[1];
+	// Find the first colon
+	colPos = url.find(":");
+	// Find the next colon from substring
+	newUrl = url.substr(colPos+3);
+	// Find the second colon
+	colonPos = newUrl.find(":");
+	if(colonPos != std::string::npos) {
+	  hostname = newUrl.substr(0,colonPos);
+	  filePos = newUrl.find("/");
+	  filename = newUrl.substr(filePos);
+	  port = newUrl.substr(colonPos+1, ((filePos-1) - colonPos));
+	} 
+        else {
+	  port = default_port;
+	}
+		
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(argv[1], port.c_str(), &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
