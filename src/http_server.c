@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
 	int rv;
-	std::string port("3240");
+	std::string port("80");
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;

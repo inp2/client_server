@@ -77,8 +77,9 @@ int main(int argc, char *argv[])
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rv = getaddrinfo(argv[1], port.c_str(), &hints, &servinfo)) != 0) {
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+	if ((rv = getaddrinfo(hostname, port.c_str(), &hints, &servinfo)) != 0)  3{
+	        fprint(rv);
+	        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
@@ -115,6 +116,9 @@ int main(int argc, char *argv[])
 	    exit(1);
 	}
 
+	// Build the GET request
+	std::stringstream query = get_request(std::string hostname, std::string port, std::string filename);
+	
 	buf[numbytes] = '\0';
 
 	printf("client: received '%s'\n",buf);
@@ -124,3 +128,8 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+std::stringstream get_request(std::string host, std::string port, std::string file) {
+  std::stringstream request = "GET /%s HTTP/1.1\r\n User-Agent: Wget/1.12 (linux-gnu)\r\n Host:%s:%s\r\n Connection: Keep-Alive";
+  std::cout << request << '\n';
+
+}

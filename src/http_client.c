@@ -40,14 +40,13 @@ int main(int argc, char *argv[])
 	char s[INET6_ADDRSTRLEN];
 
 	// URL Parser
-	std::size_t colPos;
-	std::size_t colonPos;
+	// std::size_t colonPos;
 	std::size_t filePos;
 	std::string newUrl;
 	std::string url;
 	std::string hostname;
 	std::string filename;
-	std::string default_port = "3490";
+	std::string default_port = "80";
 	std::string port;
 		
 	if (argc != 2) {
@@ -57,27 +56,31 @@ int main(int argc, char *argv[])
 
 	// Get the url
 	url = argv[1];
-	// Find the first colon
-	colPos = url.find(":");
-	// Find the next colon from substring
-	newUrl = url.substr(colPos+3);
-	// Find the second colon
-	colonPos = newUrl.find(":");
+	// find the first colon (protocol)
+	std::size_t colPos = url.find(":");
+	// Find the last colon (port)
+        newUrl = url.substr(colPos+1);
+	std::size_t colonPos = newUrl.find(":");
+	
 	if(colonPos != std::string::npos) {
-	  hostname = newUrl.substr(0,colonPos);
-	  filePos = newUrl.find("/");
+	  hostname = newUrl.substr(2,colonPos-2);
+	  filePos = newUrl.find_last_of("/");
+	  cout << newUrl << "\n";
 	  filename = newUrl.substr(filePos);
 	  port = newUrl.substr(colonPos+1, ((filePos-1) - colonPos));
 	} 
         else {
+	  filePos = newUrl.find_last_of("/");
+	  hostname = newUrl.substr(2, filePos-2);
+	  filename = newUrl.substr(filePos);
 	  port = default_port;
 	}
-		
+	
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rv = getaddrinfo(argv[1], port.c_str(), &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(hostname.c_str(), port.c_str(), &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
