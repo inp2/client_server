@@ -113,12 +113,34 @@ int main(int argc, char *argv[])
 
 	freeaddrinfo(servinfo); // all done with this structure
 
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-	    perror("recv");
-	    exit(1);
-	}
+	// Create the request
+	char request[MAXDATASIZE + 1];
+	snprintf(request, MAXDATASIZE,
+		 "GET %s HTTP/1.1\r\n"
+		 "User-Agent: Wget/1.12 (linux-gnu)\r\n"
+		 "Host: %s:%s\r\n"
+		 "Connection: Keep-Alive\r\n\r\n", filename.c_str(), hostname.c_str(), port.c_str());
 
-	buf[numbytes] = '\0';
+	
+	// Send Request
+	if (write(sockfd, request, strlen(request))>= 0)
+	  {
+	    printf("client: received '%s'\n", buf);
+	    // Read response
+	    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+	      perror("recv");
+	      exit(1);
+	    }
+	  }
+
+	printf("client: sent '%s'\n", request);
+	
+	//if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+	//  perror("recv");
+	//  exit(1);
+	//}
+
+	//buf[numbytes] = '\0';
 
 	printf("client: received '%s'\n",buf);
 
