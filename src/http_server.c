@@ -45,6 +45,8 @@ int main(int argc, char *argv[])
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
 	int rv;
+	char buffer[256];
+	int n;
 	std::string port("80");
 
 	memset(&hints, 0, sizeof hints);
@@ -117,12 +119,20 @@ int main(int argc, char *argv[])
 			get_in_addr((struct sockaddr *)&their_addr),
 			s, sizeof s);
 		printf("server: got connection from %s\n", s);
+		bzero(buffer, 256);
+		n = read(sockfd, buffer, 255);
 
+		printf("Here is the message: %s\n", buffer);
+
+	// Respond to client
+		n = write(sockfd, "Got it", 6);
+	
 		if (!fork()) { // this is the child process
-			close(sockfd); // child doesn't need the listener
-			if (send(new_fd, "Hello, world!", 13, 0) == -1)
-				perror("send");
-			close(new_fd);
+		  
+		  // close(sockfd); // child doesn't need the listener
+		  // if (send(new_fd, "Hello, world!", 13, 0) == -1)
+		  //		perror("send");
+		  //	close(new_fd);
 			exit(0);
 		}
 		close(new_fd);  // parent doesn't need this
