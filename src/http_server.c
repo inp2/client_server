@@ -2,12 +2,12 @@
 ** server.c -- a stream socket server demo
 */
 
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <string>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -18,6 +18,7 @@
 
 
 #define BACKLOG 10	 // how many pending connections queue will hold
+#define BUFFERSIZE 512
 
 void sigchld_handler(int s)
 {
@@ -34,6 +35,46 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+std::string read_request(int fd)
+{
+	char buffer[BUFFERSIZE];
+	std::stringstream request;
+	bzero(buffer, BUFFERSIZE);
+	while((n = read(fd, buffer, BUFFERSIZE-1)) != 0) {
+		char *carriage_ret = strstr(buffer, "\r\n");
+		if (carriage_ret != NULL) {
+			int pos = carriage_ret - buffer;
+			request << buffer[pos];
+		} else {
+			request << buffer[n];
+		}
+		bzero(buffer, BUFFERSIZE);
+	}
+
+	return request.str();
+}
+
+std::string parse_fname(std::string & request)
+{
+}
+
+std::string assemble_request(std::string & fname)
+{
+}
+
+void handle_request(int fd)
+{
+	std::string get_request = read_request(fd);
+	std::string fname = parse_fname(get_request);
+	std::string send_request = assemble_request(fname);
+		/* char buffer[BUFFERSIZE]; */
+		/* bzero(buffer, 256); */
+		/* n = read(sockfd, buffer, 255); */
+
+		/* printf("Here is the message: %s\n", buffer); */
+		close(new_fd);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -45,7 +86,6 @@ int main(int argc, char *argv[])
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
 	int rv;
-	char buffer[256];
 	int n;
 	std::string port("80");
 
@@ -118,23 +158,15 @@ int main(int argc, char *argv[])
 		inet_ntop(their_addr.ss_family,
 			get_in_addr((struct sockaddr *)&their_addr),
 			s, sizeof s);
+
 		printf("server: got connection from %s\n", s);
-		bzero(buffer, 256);
-		n = read(sockfd, buffer, 255);
-
-		printf("Here is the message: %s\n", buffer);
-
-	// Respond to client
-		n = write(sockfd, "Got it", 6);
 
 		if (!fork()) { // this is the child process
-
-		  // close(sockfd); // child doesn't need the listener
-		  // if (send(new_fd, "Hello, world!", 13, 0) == -1)
-		  //		perror("send");
-		  //	close(new_fd);
+			close(sockfd); // child doesn't need the listener
+			handle_request(new_fd);
 			exit(0);
 		}
+
 		close(new_fd);  // parent doesn't need this
 	}
 

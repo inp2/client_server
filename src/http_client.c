@@ -115,23 +115,19 @@ int main(int argc, char *argv[])
 
 	// Create the request
 	char request[MAXDATASIZE + 1];
-	snprintf(request, MAXDATASIZE,
-		 "GET %s HTTP/1.1\r\n"
-		 "User-Agent: Wget/1.12 (linux-gnu)\r\n"
-		 "Host: %s:%s\r\n"
-		 "Connection: Keep-Alive\r\n\r\n", filename.c_str(), hostname.c_str(), port.c_str());
-
+	std::stringstream rstream;
+	rstream << "GET " << filename << " HTTP/1.1\r\n"
+	        << "User-Agent: Wget/1.12 (linux-gnu)\r\n"
+	        << "Host: " << hostname << ":" << port << "\r\n"
+	        << "Connection: Keep-Alive\r\n\r\n";
+	std::string request = rstream.str();
 
 	// Send Request
-	if (write(sockfd, request, strlen(request))>= 0)
-	  {
-	    printf("client: received '%s'\n", buf);
-	    // Read response
-	    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-	      perror("recv");
-	      exit(1);
-	    }
-	  }
+	if (write(sockfd, request, request.length()) <  0)
+	{
+		perror("send failed\n");
+
+	}
 
 	printf("client: sent '%s'\n", request);
 
