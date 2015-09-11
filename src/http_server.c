@@ -45,16 +45,16 @@ std::string read_request(int fd)
 	std::stringstream request;
 	bzero(buffer, BUFFERSIZE);
 	while((n = read(fd, buffer, BUFFERSIZE-1)) != 0) {
-		char *carriage_ret = strstr(buffer, "\r\n");
+		char *carriage_ret = strstr(buffer, "\r\n\r\n");
 		if (carriage_ret != NULL) {
 			int pos = carriage_ret - buffer;
-			request << buffer[pos];
+			buffer[pos+9] = '\0';
+			request << buffer;
 		} else {
-			request << buffer[n];
+			request << buffer;
 		}
 		bzero(buffer, BUFFERSIZE);
 	}
-
 	return request.str();
 }
 
@@ -65,16 +65,17 @@ std::string parse_fname(std::string & request)
 	std::string fname = "";
 
 	get_pos = request.find("GET /");
-	temp_fname = request.substr(get_pos);
+	// check if get_pos != std::string::npos
+	temp_fname = request.substr(get_pos+5);
 	if(temp_fname != "")
 	{
 		fname = temp_fname.substr(0, temp_fname.find(" "));
 		int bad_pos0 = fname.find(" ");
 		int bad_pos1 = fname.find("\\");
-		std::string ender = temp_fname.substr(temp_fname.find(" "), temp_fname.find("\r\n"));
+		std::string ender = temp_fname.substr(temp_fname.find(" "), temp_fname.find("\r\n") - temp_fname.find(" "));
 		if (bad_pos0 != std::string::npos ||
 		    bad_pos1 != std::string::npos ||
-		    (ender.compare(" HTTP/1.1") == 0)) {
+		    ender != " HTTP/1.1") {
 			fname = "";
 		}
 	}
@@ -85,7 +86,6 @@ std::string parse_fname(std::string & request)
 std::string assemble_request(std::string & fname)
 {
 	std::stringstream response;
-
 	if (fname.length() > 0) {
 		std::ifstream inf(fname.c_str());
 
@@ -109,7 +109,6 @@ void handle_request(int fd)
 	std::string get_request = read_request(fd);
 	std::string fname = parse_fname(get_request);
 	std::string send_request = assemble_request(fname);
-
 	if (write(fd, send_request.c_str(), send_request.length()) < 0)
 	{
 		perror("send failed\n");
