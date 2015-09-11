@@ -19,7 +19,7 @@ using namespace std;
 
 #include <arpa/inet.h>
 
-#define MAXDATASIZE 100 // max number of bytes we can get at once
+#define BUFFERSIZE 512
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -31,10 +31,33 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+std::string read_response(int fd)
+{
+	int n;
+	char buffer[BUFFERSIZE];
+	std::stringstream response;
+	bzero(buffer, BUFFERSIZE);
+	while((n = read(fd, buffer, BUFFERSIZE-1)) != 0)
+	{
+		char *carriage_ret = strstr(buffer, "\r\n\r\n");
+		if(carriage_ret != NULL)
+		{
+			int pos = carriage_ret - buffer;
+			buffer[pos] = '\0';
+			response << buffer;
+		} else
+		{
+			response << buffer;
+		}
+		bzero(buffer, BUFFERSIZE);
+	}
+	return response.str();
+}
+
 int main(int argc, char *argv[])
 {
 	int sockfd;
-	char buf[MAXDATASIZE];
+	// char buf[BUFFERSIZE];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
 	char s[INET6_ADDRSTRLEN];
@@ -117,24 +140,18 @@ int main(int argc, char *argv[])
 	std::stringstream rstream;
 	rstream << "GET " << filename << " HTTP/1.1\r\n\r\n";
 	std::string request = rstream.str();
-
+	printf("client: sent %s\n", request.c_str());
+	printf("client waiting for response\n");
+	
 	// Send Request
 	if (write(sockfd, request.c_str(), request.length()) <  0)
 	{
 		perror("send failed\n");
-
 	}
-
-	printf("client: sent '%s'\n", request.c_str());
-
-	//if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-	//  perror("recv");
-	//  exit(1);
-	//}
-
-	//buf[numbytes] = '\0';
-
-	printf("client: received '%s'\n",buf);
+	
+	printf("client: waiting for response");
+	std::string get_response = read_response(sockfd);
+	printf("client: received '%s'\n", get_response.c_str());
 
 	close(sockfd);
 

@@ -106,6 +106,7 @@ std::string assemble_request(std::string & fname)
 
 void handle_request(int fd)
 {
+	printf("Handling request");
 	std::string get_request = read_request(fd);
 	std::string fname = parse_fname(get_request);
 	std::string send_request = assemble_request(fname);
@@ -204,6 +205,7 @@ int main(int argc, char *argv[])
 
 		if (!fork()) { // this is the child process
 			close(sockfd); // child doesn't need the listener
+			printf("child doesn't need the listener");
 			handle_request(new_fd);
 			exit(0);
 		}
