@@ -33,7 +33,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(int argc, char *argv[])
 {
-	int sockfd, numbytes;
+	int sockfd;
 	char buf[MAXDATASIZE];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
@@ -114,22 +114,18 @@ int main(int argc, char *argv[])
 	freeaddrinfo(servinfo); // all done with this structure
 
 	// Create the request
-	char request[MAXDATASIZE + 1];
 	std::stringstream rstream;
-	rstream << "GET " << filename << " HTTP/1.1\r\n"
-	        << "User-Agent: Wget/1.12 (linux-gnu)\r\n"
-	        << "Host: " << hostname << ":" << port << "\r\n"
-	        << "Connection: Keep-Alive\r\n\r\n";
+	rstream << "GET " << filename << " HTTP/1.1\r\n\r\n";
 	std::string request = rstream.str();
 
 	// Send Request
-	if (write(sockfd, request, request.length()) <  0)
+	if (write(sockfd, request.c_str(), request.length()) <  0)
 	{
 		perror("send failed\n");
 
 	}
 
-	printf("client: sent '%s'\n", request);
+	printf("client: sent '%s'\n", request.c_str());
 
 	//if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 	//  perror("recv");

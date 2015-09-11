@@ -2,7 +2,10 @@
 ** server.c -- a stream socket server demo
 */
 
+#include <sstream>
 #include <string>
+#include <fstream>
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -37,6 +40,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 std::string read_request(int fd)
 {
+	int n;
 	char buffer[BUFFERSIZE];
 	std::stringstream request;
 	bzero(buffer, BUFFERSIZE);
@@ -56,18 +60,48 @@ std::string read_request(int fd)
 
 std::string parse_fname(std::string & request)
 {
-	int file_pos;
-	str::string temp_fname;
-	str::string fname;
-	file_pos = request.find("/");
-	temp_fname = request.substr(file_pos);
-	fname = temp_fname.substr(0, temp_fname.find(" "));
+	int get_pos;
+	std::string temp_fname;
+	std::string fname = "";
+
+	get_pos = request.find("GET /");
+	temp_fname = request.substr(get_pos);
+	if(temp_fname != "")
+	{
+		fname = temp_fname.substr(0, temp_fname.find(" "));
+		int bad_pos0 = fname.find(" ");
+		int bad_pos1 = fname.find("\\");
+		std::string ender = temp_fname.substr(temp_fname.find(" "), temp_fname.find("\r\n"));
+		if (bad_pos0 != std::string::npos ||
+		    bad_pos1 != std::string::npos ||
+		    (ender.compare(" HTTP/1.1") == 0)) {
+			fname = "";
+		}
+	}
+
 	return fname;
 }
 
 std::string assemble_request(std::string & fname)
 {
-	
+	std::stringstream response;
+
+	if (fname.length() > 0) {
+		std::ifstream inf(fname.c_str());
+
+		if(inf.good()) {
+			response << "HTTP/1.1 200 OK\r\n\r\n"
+			         << inf.rdbuf();
+		} else {
+			response << "HTTP/1.1 404 Not Found\r\n\r\n"
+			         << "Check yo' self";
+		}
+	}
+	else {
+		response << "HTTP/1.1 400 Bad Request\r\n\r\n";
+	}
+
+	return response.str();
 }
 
 void handle_request(int fd)
@@ -75,12 +109,13 @@ void handle_request(int fd)
 	std::string get_request = read_request(fd);
 	std::string fname = parse_fname(get_request);
 	std::string send_request = assemble_request(fname);
-		/* char buffer[BUFFERSIZE]; */
-		/* bzero(buffer, 256); */
-		/* n = read(sockfd, buffer, 255); */
 
-		/* printf("Here is the message: %s\n", buffer); */
-		close(new_fd);
+	if (write(fd, send_request.c_str(), send_request.length()) < 0)
+	{
+		perror("send failed\n");
+	}
+
+	close(fd);
 }
 
 
@@ -94,7 +129,6 @@ int main(int argc, char *argv[])
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
 	int rv;
-	int n;
 	std::string port("80");
 
 	memset(&hints, 0, sizeof hints);
