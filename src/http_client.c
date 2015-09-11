@@ -19,7 +19,7 @@ using namespace std;
 
 #include <arpa/inet.h>
 
-#define MAXDATASIZE 100 // max number of bytes we can get at once 
+#define MAXDATASIZE 100 // max number of bytes we can get at once
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -33,7 +33,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(int argc, char *argv[])
 {
-	int sockfd, numbytes;  
+	int sockfd, numbytes;
 	char buf[MAXDATASIZE];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	std::string filename;
 	std::string default_port = "80";
 	std::string port;
-		
+
 	if (argc != 2) {
 	    fprintf(stderr,"usage: client hostname\n");
 	    exit(1);
@@ -61,21 +61,21 @@ int main(int argc, char *argv[])
 	// Find the last colon (port)
         newUrl = url.substr(colPos+1);
 	std::size_t colonPos = newUrl.find(":");
-	
+
 	if(colonPos != std::string::npos) {
 	  hostname = newUrl.substr(2,colonPos-2);
 	  filePos = newUrl.find_last_of("/");
 	  cout << newUrl << "\n";
 	  filename = newUrl.substr(filePos);
 	  port = newUrl.substr(colonPos+1, ((filePos-1) - colonPos));
-	} 
+	}
         else {
 	  filePos = newUrl.find_last_of("/");
 	  hostname = newUrl.substr(2, filePos-2);
 	  filename = newUrl.substr(filePos);
 	  port = default_port;
 	}
-	
+
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 		 "Host: %s:%s\r\n"
 		 "Connection: Keep-Alive\r\n\r\n", filename.c_str(), hostname.c_str(), port.c_str());
 
-	
+
 	// Send Request
 	if (write(sockfd, request, strlen(request))>= 0)
 	  {
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	  }
 
 	printf("client: sent '%s'\n", request);
-	
+
 	//if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 	//  perror("recv");
 	//  exit(1);
@@ -148,4 +148,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
