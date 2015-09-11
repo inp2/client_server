@@ -56,10 +56,18 @@ std::string read_request(int fd)
 
 std::string parse_fname(std::string & request)
 {
+	int file_pos;
+	str::string temp_fname;
+	str::string fname;
+	file_pos = request.find("/");
+	temp_fname = request.substr(file_pos);
+	fname = temp_fname.substr(0, temp_fname.find(" "));
+	return fname;
 }
 
 std::string assemble_request(std::string & fname)
 {
+	
 }
 
 void handle_request(int fd)
