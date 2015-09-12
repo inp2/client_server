@@ -48,8 +48,9 @@ std::string read_request(int fd)
 		char *carriage_ret = strstr(buffer, "\r\n\r\n");
 		if (carriage_ret != NULL) {
 			int pos = carriage_ret - buffer;
-			buffer[pos+9] = '\0';
+			buffer[pos+4] = '\0';
 			request << buffer;
+			break;
 		} else {
 			request << buffer;
 		}
@@ -106,10 +107,16 @@ std::string assemble_request(std::string & fname)
 
 void handle_request(int fd)
 {
-	printf("Handling request");
 	std::string get_request = read_request(fd);
+	/* std::cout << "=========== Request ============" << std::endl; */
+	/* std::cout << get_request << std::endl; */
+	/* std::cout << "================================" << std::endl; */
 	std::string fname = parse_fname(get_request);
+	// std::cout << "fname: " << fname << std::endl;
 	std::string send_request = assemble_request(fname);
+	/* std::cout << "========== Send Request ========" << std::endl; */
+	/* std::cout << send_request << std::endl; */
+	/* std::cout << "================================" << std::endl; */
 	if (write(fd, send_request.c_str(), send_request.length()) < 0)
 	{
 		perror("send failed\n");
@@ -205,7 +212,6 @@ int main(int argc, char *argv[])
 
 		if (!fork()) { // this is the child process
 			close(sockfd); // child doesn't need the listener
-			printf("child doesn't need the listener");
 			handle_request(new_fd);
 			exit(0);
 		}

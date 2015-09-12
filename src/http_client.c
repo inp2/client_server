@@ -2,6 +2,8 @@
 ** client.c -- a stream socket client demo
 */
 
+#include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -37,22 +39,22 @@ std::string read_response(int fd)
 	char buffer[BUFFERSIZE];
 	std::stringstream response;
 	bzero(buffer, BUFFERSIZE);
+	bool past_header = false;
 	while((n = read(fd, buffer, BUFFERSIZE-1)) != 0)
 	{
 		char *carriage_ret = strstr(buffer, "\r\n\r\n");
-		if(carriage_ret != NULL)
-		{
+		if (carriage_ret != NULL) {
 			int pos = carriage_ret - buffer;
-			buffer[pos] = '\0';
-			response << buffer;
-		} else
-		{
-			response << buffer;
-		}
+			past_header = true;
+			char *tmpbuf = buffer + pos + 4;
+			response << tmpbuf;
+		} else if (past_header) response << buffer;
+
 		bzero(buffer, BUFFERSIZE);
 	}
 	return response.str();
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -142,16 +144,21 @@ int main(int argc, char *argv[])
 	std::string request = rstream.str();
 	printf("client: sent %s\n", request.c_str());
 	printf("client waiting for response\n");
-	
+
 	// Send Request
 	if (write(sockfd, request.c_str(), request.length()) <  0)
 	{
 		perror("send failed\n");
 	}
-	
-	printf("client: waiting for response");
+
 	std::string get_response = read_response(sockfd);
-	printf("client: received '%s'\n", get_response.c_str());
+	std::ofstream ofile;
+	/* char fname[filename.size()]; */
+	/* std::copy(filename.begin()+1, filename.end(), fname); */
+	/* fname[filename.size()-1] = '\0'; */
+	ofile.open("output", std::ios::out | std::ios::trunc | std::ios::binary);
+	ofile << get_response;
+	ofile.close();
 
 	close(sockfd);
 
