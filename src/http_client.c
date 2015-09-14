@@ -65,7 +65,9 @@ int main(int argc, char *argv[])
 	char s[INET6_ADDRSTRLEN];
 
 	// URL Parser
-	// std::size_t colonPos;
+	std::size_t portPos;
+	std::size_t hostPos;
+	std::string host;
 	std::size_t filePos;
 	std::string newUrl;
 	std::string url;
@@ -81,24 +83,27 @@ int main(int argc, char *argv[])
 
 	// Get the url
 	url = argv[1];
-	// find the first colon (protocol)
-	std::size_t colPos = url.find(":");
+	host = url.substr(7);
+  	std::size_t colPos = host.find(":");
 	// Find the last colon (port)
-        newUrl = url.substr(colPos+1);
-	std::size_t colonPos = newUrl.find(":");
-
-	if(colonPos != std::string::npos) {
-	  hostname = newUrl.substr(2,colonPos-2);
-	  filePos = newUrl.find_last_of("/");
-	  cout << newUrl << "\n";
-	  filename = newUrl.substr(filePos);
-	  port = newUrl.substr(colonPos+1, ((filePos-1) - colonPos));
+	newUrl = host.substr(colPos+1);
+	
+	// There is a colon
+	if(colPos != std::string::npos) {
+		portPos = host.find(":");
+		filePos = host.find("/");
+		hostname = host.substr(0, portPos);
+		filename = host.substr(filePos);
+		port = host.substr(portPos+1, filePos-1 - portPos);
+		cout << hostname << " " << filename << " " << port << endl;
 	}
-        else {
-	  filePos = newUrl.find_last_of("/");
-	  hostname = newUrl.substr(2, filePos-2);
-	  filename = newUrl.substr(filePos);
-	  port = default_port;
+	// There is no colon
+	else {
+	filePos = host.find("/");
+	hostname = host.substr(0, filePos);
+	filename = host.substr(filePos);
+	port = default_port;
+	cout << hostname << " " << filename << " " << port << endl;
 	}
 
 	memset(&hints, 0, sizeof hints);
